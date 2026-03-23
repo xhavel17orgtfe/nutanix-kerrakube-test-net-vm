@@ -9,9 +9,15 @@ resource "nutanix_subnet" "phys_lan" {
   cluster_uuid = var.cluster_uuid
 }
 
+
 # 2. Create VM with two disks
-resource "nutanix_virtual_machine" "vm_nutanix_terrakube" {
-  name                 = "vm-nutanix-terrakube"
+resource "nutanix_virtual_machine" "vm" {
+  count                = 3
+  
+  # Removes the 'vm-' prefix from the variable to avoid 'vm1-vm-...'
+  # This results in: vm1-nutanix-terrakube
+  name                 = "vm${count.index + 1}-${var.vm_name}"
+  
   cluster_uuid         = var.cluster_uuid
   num_sockets          = 1
   num_vcpus_per_socket = 2
@@ -21,9 +27,15 @@ resource "nutanix_virtual_machine" "vm_nutanix_terrakube" {
     subnet_uuid = nutanix_subnet.phys_lan.id
   }
 
-  # OS DISK - 30GB
+  # OS DISK (20GB)
   disk_list {
-    disk_size_mib = 30720 # 30GB * 1024
+    disk_size_mib = 20480
+    storage_config {
+        storage_container_reference {
+            kind = "storage_container"
+            uuid = var.storage_container_uuid
+        }
+    }
     device_properties {
       device_type = "DISK"
       disk_address = {
@@ -31,16 +43,17 @@ resource "nutanix_virtual_machine" "vm_nutanix_terrakube" {
         adapter_type = "SCSI"
       }
     }
-    # If you are cloning from an image, add this:
-    # data_source_reference = {
-    #   kind = "image"
-    #   uuid = var.image_uuid 
-    # }
   }
 
-  # SECOND DISK - 8GB
+  # DATA DISK (8GB)
   disk_list {
-    disk_size_mib = 8192 # 8GB * 1024
+    disk_size_mib = 8192
+    storage_config {
+        storage_container_reference {
+            kind = "storage_container"
+            uuid = var.storage_container_uuid
+        }
+    }
     device_properties {
       device_type = "DISK"
       disk_address = {

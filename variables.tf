@@ -25,5 +25,5 @@ variable "storage_container_uuid" {
 
 variable "vm_name" {
   description = "The name of the Virtual Machine"
-  type = string
+  type        = string
 }
