@@ -1,8 +1,10 @@
 # 1. Create the Physical Network
-resource "nutanix_vlan_network" "phys_lan" {
+# Note: Nutanix Terraform Provider uses "nutanix_subnet" for all network types
+resource "nutanix_subnet" "phys_lan" {
   name        = "physical_lan_terraform"
   vlan_id     = 0
-  description = "Physical bridge for DHCP on Dell R620s"
+  subnet_type = "VLAN"
+  cluster_uuid = var.cluster_uuid
 }
 
 # 2. Create the VM
@@ -11,11 +13,11 @@ resource "nutanix_virtual_machine" "vm_terraform" {
   cluster_uuid         = var.cluster_uuid
   num_vcpus_per_socket = 2
   num_sockets          = 1
-  memory_size_mib      = 8192 # 8GB
+  memory_size_mib      = 8192 # 8GB RAM
 
   # Connect to the network created above
   nic_list {
-    subnet_uuid = nutanix_vlan_network.phys_lan.id
+    subnet_uuid = nutanix_subnet.phys_lan.id
   }
 
   # OS DISK (64 GB)
