@@ -9,17 +9,44 @@ resource "nutanix_subnet" "phys_lan" {
   cluster_uuid = var.cluster_uuid
 }
 
-# 2. create vm
+# 2. Create VM with two disks
 resource "nutanix_virtual_machine" "vm1" {
   name                 = "test-vm-01"
   cluster_uuid         = var.cluster_uuid
   num_sockets          = 1
   num_vcpus_per_socket = 2
-  memory_size_mib      = 4096
+  memory_size_mib      = 8192
 
-  # Attach the VM using the output from the resource above
   nic_list {
-    # Reference: resource_type.resource_name.id
     subnet_uuid = nutanix_subnet.phys_lan.id
+  }
+
+  # OS DISK - 20GB
+  disk_list {
+    disk_size_mib = 20480 # 20GB * 1024
+    device_properties {
+      device_type = "DISK"
+      disk_address = {
+        device_index = 0
+        adapter_type = "SCSI"
+      }
+    }
+    # If you are cloning from an image, add this:
+    # data_source_reference = {
+    #   kind = "image"
+    #   uuid = var.image_uuid 
+    # }
+  }
+
+  # SECOND DISK - 8GB
+  disk_list {
+    disk_size_mib = 8192 # 8GB * 1024
+    device_properties {
+      device_type = "DISK"
+      disk_address = {
+        device_index = 1
+        adapter_type = "SCSI"
+      }
+    }
   }
 }
