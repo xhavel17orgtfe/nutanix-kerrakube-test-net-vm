@@ -9,11 +9,11 @@ output "network_name" {
 }
 
 output "vm_id" {
-  value       = nutanix_virtual_machine.vm1.id
+  value       = nutanix_virtual_machine.vm_nutanix_terrakube.id
   description = "The UUID of the created Virtual Machine"
 }
 
 output "vm_name" {
-  value       = nutanix_virtual_machine.vm1.name
+  value       = nutanix_virtual_machine.vm_nutanix_terrakube.name
   description = "The name of the created Virtual Machine"
 }

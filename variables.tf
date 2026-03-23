@@ -21,3 +21,9 @@ variable "storage_container_uuid" {
   description = "UUID of the storage container for disks"
   type = string
 }
+
+
+variable "vm_name" {
+  description = "The name of the Virtual Machine"
+  type = string
+}
