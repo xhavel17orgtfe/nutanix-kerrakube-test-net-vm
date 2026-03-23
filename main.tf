@@ -21,9 +21,9 @@ resource "nutanix_virtual_machine" "vm_nutanix_terrakube" {
     subnet_uuid = nutanix_subnet.phys_lan.id
   }
 
-  # OS DISK - 20GB
+  # OS DISK - 30GB
   disk_list {
-    disk_size_mib = 20480 # 20GB * 1024
+    disk_size_mib = 30720 # 30GB * 1024
     device_properties {
       device_type = "DISK"
       disk_address = {
