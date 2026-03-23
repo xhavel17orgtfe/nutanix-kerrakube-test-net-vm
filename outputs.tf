@@ -1,14 +1,9 @@
-# output "vm_name" {
-#   value       = nutanix_virtual_machine.vm_terraform.name
-#   description = "The name of the VM created in Nutanix"
-# }
+output "network_uuid" {
+  value       = nutanix_subnet.phys_lan.id
+  description = "The UUID of the physical_lan_terraform network"
+}
 
-# output "vm_uuid" {
-#   value       = nutanix_virtual_machine.vm_terraform.id
-#   description = "The unique UUID of the new VM"
-# }
-
-# output "nic_mac_address" {
-#   value       = nutanix_virtual_machine.vm_terraform.nic_list[0].mac_addr
-#   description = "The MAC address of the VM (useful for DHCP reservations)"
-# }
+output "network_name" {
+  value       = nutanix_subnet.phys_lan.name
+  description = "The name of the created network"
+}
