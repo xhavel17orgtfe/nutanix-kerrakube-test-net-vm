@@ -10,8 +10,8 @@ resource "nutanix_subnet" "phys_lan" {
 }
 
 # 2. Create VM with two disks
-resource "nutanix_virtual_machine" "vm1" {
-  name                 = "test-vm-01"
+resource "nutanix_virtual_machine" "vm_nutanix_terrakube" {
+  name                 = "vm-nutanix-terrakube"
   cluster_uuid         = var.cluster_uuid
   num_sockets          = 1
   num_vcpus_per_socket = 2
