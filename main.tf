@@ -8,3 +8,18 @@ resource "nutanix_subnet" "phys_lan" {
   # This tells Nutanix which cluster to build the network on
   cluster_uuid = var.cluster_uuid
 }
+
+# 2. create vm
+resource "nutanix_virtual_machine" "vm1" {
+  name                 = "test-vm-01"
+  cluster_uuid         = var.cluster_uuid
+  num_sockets          = 1
+  num_vcpus_per_socket = 2
+  memory_size_mib      = 4096
+
+  # Attach the VM using the output from the resource above
+  nic_list {
+    # Reference: resource_type.resource_name.id
+    subnet_uuid = nutanix_subnet.phys_lan.id
+  }
+}
