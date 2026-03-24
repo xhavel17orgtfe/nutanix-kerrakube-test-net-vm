@@ -8,16 +8,14 @@ terraform {
       name = "TEST-CLI" 
     } 
   } 
-terraform { 
-  backend "remote" { 
-    hostname = "terrakube-api.rak.farnostrakvice.cz"
-    organization = "Testing" 
+  # backend "remote" { 
+  #   hostname = "terrakube-api.rak.farnostrakvice.cz"
+  #   organization = "Testing" 
 
-    workspaces { 
-      name = "TEST-CLI" 
-    } 
-  } 
-} 
+  #   workspaces { 
+  #     name = "TEST-CLI" 
+  #   } 
+  # }  
   required_providers {
     nutanix = {
       source  = "nutanix/nutanix"
