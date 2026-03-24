@@ -8,7 +8,6 @@ on:
     branches:
       - main
 
-# Ensures only one Terraform run happens at a time to prevent state locking
 concurrency:
   group: "terraform-remote-run"
   cancel-in-progress: false
@@ -16,28 +15,31 @@ concurrency:
 jobs:
   terraform:
     name: "Terraform Action"
-    # Using your self-hosted runner group (ARC or binary runner)
     runs-on: 
       group: default
     
-    # Using your custom image with Node.js 20, Terraform, and GCloud installed
-    # container: 
-    #   image: cr.rak.farnostrakvice.cz:50443/my/my-gcp-terraform-ubuntu:latest
-
     env:
       TF_IN_AUTOMATION: "true"
 
     steps:
+      # 1. Manually install Node.js so the Terraform wrapper can execute
+      - name: Prepare Node.js Environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl
+          curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+          sudo apt-get install -y nodejs
+
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          # Points to your internal Terrakube API
           cli_config_credentials_hostname: 'terrakube-api.rak.farnostrakvice.cz'
-          # Uses the secret verified in your GitHub UI screenshot
           cli_config_credentials_token: ${{ secrets.TERRAKUBE_TOKEN }}
+          # Turning the wrapper off is the safest way to avoid 'node' errors
+          terraform_wrapper: false 
 
       - name: Terraform Init
         id: init
@@ -45,10 +47,8 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        # -no-color keeps the logs clean and readable in the GH UI
         run: terraform plan -no-color -input=false
 
-      # Only executes 'apply' on pushes to the main branch (not on PRs)
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -no-color -input=false
