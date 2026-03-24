@@ -11,35 +11,37 @@ concurrency:
   group: terraform-main
   cancel-in-progress: false
 
+env:
+  TERRAFORM_IMAGE: cr.rak.farnostrakvice.cz:50443/my/my-gcp-terraform:latest
+
 jobs:
   plan:
     name: Terraform Plan
     runs-on: 
       group: default
-    container:
-      image: cr.rak.farnostrakvice.cz:50443/my/my-gcp-terraform:latest
-      
     permissions:
       contents: read
     env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       TF_TOKEN_terrakube_api_rak_farnostrakvice_cz: ${{ secrets.TERRAKUBE_TOKEN }}
     steps:
-      - name: Checkout Repository
-        run: |
-          set -euo pipefail
-          git init .
-          git remote remove origin || true
-          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git fetch --no-tags --depth=1 origin "${GITHUB_SHA}"
-          git checkout --force --detach FETCH_HEAD
-          git clean -ffdqx
-
-      - name: Terraform Init
-        run: terraform init -input=false
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Terraform Plan
-        run: terraform plan -input=false
+        run: >-
+          docker run --rm
+          -e TF_TOKEN_terrakube_api_rak_farnostrakvice_cz
+          -v "$GITHUB_WORKSPACE:/workspace"
+          -w /workspace
+          "$TERRAFORM_IMAGE"
+          sh -lc 'terraform init -input=false && terraform plan -input=false -out=tfplan'
+
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: tfplan
+          retention-days: 1
 
   apply:
     name: Terraform Apply
@@ -47,26 +49,25 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: 
       group: default
-    container:
-      image: cr.rak.farnostrakvice.cz:50443/my/my-gcp-terraform:latest
     permissions:
       contents: read
     env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       TF_TOKEN_terrakube_api_rak_farnostrakvice_cz: ${{ secrets.TERRAKUBE_TOKEN }}
     steps:
-      - name: Checkout Repository
-        run: |
-          set -euo pipefail
-          git init .
-          git remote remove origin || true
-          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git fetch --no-tags --depth=1 origin "${GITHUB_SHA}"
-          git checkout --force --detach FETCH_HEAD
-          git clean -ffdqx
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Terraform Init
-        run: terraform init -input=false
+      - name: Download Plan Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+          path: .
 
       - name: Terraform Apply
-        run: terraform apply -input=false -auto-approve
+        run: >-
+          docker run --rm
+          -e TF_TOKEN_terrakube_api_rak_farnostrakvice_cz
+          -v "$GITHUB_WORKSPACE:/workspace"
+          -w /workspace
+          "$TERRAFORM_IMAGE"
+          sh -lc 'terraform init -input=false && terraform apply -input=false -auto-approve tfplan'
