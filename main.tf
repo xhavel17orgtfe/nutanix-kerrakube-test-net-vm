@@ -12,7 +12,7 @@ resource "nutanix_subnet" "phys_lan" {
 
 # 2. Create VM with two disks
 resource "nutanix_virtual_machine" "vm" {
-  count                = 15
+  count                = 5
   
   # Removes the 'vm-' prefix from the variable to avoid 'vm1-vm-...'
   # This results in: vm1-nutanix-terrakube
