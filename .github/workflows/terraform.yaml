@@ -12,6 +12,9 @@ concurrency:
   group: "terraform-remote-run"
   cancel-in-progress: false
 
+env:
+  environment: prd
+
 jobs:
   terraform:
     name: "Terraform Action"
@@ -20,6 +23,8 @@ jobs:
     
     env:
       TF_IN_AUTOMATION: "true"
+
+
 
     steps:
       # 1. Manually install Node.js so the Terraform wrapper can execute
