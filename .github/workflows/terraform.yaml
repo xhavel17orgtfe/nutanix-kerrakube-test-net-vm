@@ -22,10 +22,18 @@ jobs:
     permissions:
       contents: read
     env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       TF_TOKEN_terrakube_api_rak_farnostrakvice_cz: ${{ secrets.TERRAKUBE_TOKEN }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout Repository
+        run: |
+          set -euo pipefail
+          git init .
+          git remote remove origin || true
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --no-tags --depth=1 origin "${GITHUB_SHA}"
+          git checkout --force --detach FETCH_HEAD
+          git clean -ffdqx
 
       - name: Terraform Init
         run: terraform init -input=false
@@ -36,6 +44,7 @@ jobs:
   apply:
     name: Terraform Apply
     needs: plan
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: 
       group: default
     container:
@@ -43,14 +52,21 @@ jobs:
     permissions:
       contents: read
     env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       TF_TOKEN_terrakube_api_rak_farnostrakvice_cz: ${{ secrets.TERRAKUBE_TOKEN }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
+      - name: Checkout Repository
+        run: |
+          set -euo pipefail
+          git init .
+          git remote remove origin || true
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --no-tags --depth=1 origin "${GITHUB_SHA}"
+          git checkout --force --detach FETCH_HEAD
+          git clean -ffdqx
 
       - name: Terraform Init
         run: terraform init -input=false
 
       - name: Terraform Apply
-        run: terraform apply -input=false -auto-approve tfplan
+        run: terraform apply -input=false -auto-approve
