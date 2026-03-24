@@ -14,6 +14,7 @@ jobs:
     # Using your self-hosted runner group
     runs-on: 
       group: default
+    container: cr.rak.farnostrakvice.cz:50443/my/my-gcp-terraform-ubuntu:latest
     
     env:
       TF_IN_AUTOMATION: "true"
