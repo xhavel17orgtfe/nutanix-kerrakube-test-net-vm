@@ -21,8 +21,8 @@ jobs:
       group: default
     
     # Using your custom image with Node.js 20, Terraform, and GCloud installed
-    container: 
-      image: cr.rak.farnostrakvice.cz:50443/my/my-gcp-terraform-ubuntu:latest
+    # container: 
+    #   image: cr.rak.farnostrakvice.cz:50443/my/my-gcp-terraform-ubuntu:latest
 
     env:
       TF_IN_AUTOMATION: "true"
