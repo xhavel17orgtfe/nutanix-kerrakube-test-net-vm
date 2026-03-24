@@ -8,26 +8,23 @@ on:
     branches:
       - main
 
+
 concurrency:
   group: "terraform-remote-run"
   cancel-in-progress: false
 
 env:
-  environment: prd
+  TF_IN_AUTOMATION: "true"
+  environment: "prd"
 
 jobs:
-  terraform:
-    name: "Terraform Action"
+  # --- JOB 1: PLAN ---
+  terraform-plan:
+    name: "Terraform Plan"
     runs-on: 
       group: default
     
-    env:
-      TF_IN_AUTOMATION: "true"
-
-
-
     steps:
-      # 1. Manually install Node.js so the Terraform wrapper can execute
       - name: Prepare Node.js Environment
         run: |
           sudo apt-get update
@@ -43,17 +40,48 @@ jobs:
         with:
           cli_config_credentials_hostname: 'terrakube-api.rak.farnostrakvice.cz'
           cli_config_credentials_token: ${{ secrets.TERRAKUBE_TOKEN }}
-          # Turning the wrapper off is the safest way to avoid 'node' errors
           terraform_wrapper: false 
 
       - name: Terraform Init
-        id: init
         run: terraform init
 
       - name: Terraform Plan
-        id: plan
         run: terraform plan -no-color -input=false
 
+  # --- JOB 2: APPLY ---
+  terraform-apply:
+    name: "Terraform Apply"
+    needs: terraform-plan
+    # Only run Apply on pushes to main, not on PRs
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: 
+      group: default
+    
+    # This environment 'prd' triggers the manual approval button in GitHub
+    environment: 
+      name: prd
+    
+    steps:
+      - name: Prepare Node.js Environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl
+          curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+          sudo apt-get install -y nodejs
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          cli_config_credentials_hostname: 'terrakube-api.rak.farnostrakvice.cz'
+          cli_config_credentials_token: ${{ secrets.TERRAKUBE_TOKEN }}
+          terraform_wrapper: false 
+
+      - name: Terraform Init
+        run: terraform init
+
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        # -auto-approve is required because the "human" step happened at the GH UI level
         run: terraform apply -auto-approve -no-color -input=false
