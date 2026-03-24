@@ -58,8 +58,6 @@ jobs:
       group: default
     
     # This environment 'prd' triggers the manual approval button in GitHub
-    environment: 
-      name: prd
     
     steps:
       - name: Prepare Node.js Environment
@@ -84,4 +82,4 @@ jobs:
 
       - name: Terraform Apply
         # -auto-approve is required because the "human" step happened at the GH UI level
-        run: terraform apply -auto-approve -no-color -input=false
+        run: terraform apply -no-color -input=false
