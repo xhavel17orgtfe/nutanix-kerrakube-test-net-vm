@@ -1,82 +1,45 @@
-name: Terraform
+name: "Terrakube Remote Run"
 
 on:
-  pull_request:
-    branches: ["main"]
   push:
-    branches: ["main"]
-  workflow_dispatch:
-
-concurrency:
-  group: terraform-main
-  cancel-in-progress: false
-
-env:
-  TERRAFORM_IMAGE: cr.rak.farnostrakvice.cz:50443/my/my-gcp-terraform:latest
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  plan:
-    name: Terraform Plan
+  terraform:
+    name: "Terraform Action"
+    # Using your self-hosted runner group
     runs-on: 
       group: default
-    permissions:
-      contents: read
+    
     env:
-      TF_TOKEN_terrakube_api_rak_farnostrakvice_cz: ${{ secrets.TERRAKUBE_TOKEN }}
+      TF_IN_AUTOMATION: "true"
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v5
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          # hostname MUST match your Terrakube API exactly
+          cli_config_credentials_hostname: 'terrakube-api.rak.farnostrakvice.cz'
+          # Using the secret name shown in your screenshot
+          cli_config_credentials_token: ${{ secrets.TERRAKUBE_TOKEN }}
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
 
       - name: Terraform Plan
-        run: |
-          set -euo pipefail
-          cid=$(docker create \
-            -e TF_TOKEN_terrakube_api_rak_farnostrakvice_cz \
-            "$TERRAFORM_IMAGE" \
-            sh -lc 'cd /workspace && terraform init -input=false && terraform plan -input=false -out=tfplan')
-          trap 'docker rm -f "$cid" >/dev/null 2>&1 || true' EXIT
-          docker cp "$GITHUB_WORKSPACE/." "$cid:/workspace"
-          docker start -a "$cid"
-          docker cp "$cid:/workspace/tfplan" "$GITHUB_WORKSPACE/tfplan"
-          docker rm -f "$cid" >/dev/null 2>&1 || true
-          trap - EXIT
+        id: plan
+        # -no-color ensures GitHub logs stay clean
+        run: terraform plan -no-color -input=false
 
-      - name: Upload Plan Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfplan
-          path: tfplan
-          retention-days: 1
-
-  apply:
-    name: Terraform Apply
-    needs: plan
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: 
-      group: default
-    permissions:
-      contents: read
-    env:
-      TF_TOKEN_terrakube_api_rak_farnostrakvice_cz: ${{ secrets.TERRAKUBE_TOKEN }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Download Plan Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: tfplan
-          path: .
-
+      # Only run Apply on a push to the main branch
       - name: Terraform Apply
-        run: |
-          set -euo pipefail
-          cid=$(docker create \
-            -e TF_TOKEN_terrakube_api_rak_farnostrakvice_cz \
-            "$TERRAFORM_IMAGE" \
-            sh -lc 'cd /workspace && terraform init -input=false && terraform apply -input=false -auto-approve tfplan')
-          trap 'docker rm -f "$cid" >/dev/null 2>&1 || true' EXIT
-          docker cp "$GITHUB_WORKSPACE/." "$cid:/workspace"
-          docker start -a "$cid"
-          docker rm -f "$cid" >/dev/null 2>&1 || true
-          trap - EXIT
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve -no-color -input=false
