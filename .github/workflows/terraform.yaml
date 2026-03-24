@@ -25,19 +25,21 @@ jobs:
       TF_TOKEN_terrakube_api_rak_farnostrakvice_cz: ${{ secrets.TERRAKUBE_TOKEN }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Terraform Plan
         run: |
           set -euo pipefail
-          cd "${GITHUB_WORKSPACE}"
-          ls -la
-          docker run --rm \
+          cid=$(docker create \
             -e TF_TOKEN_terrakube_api_rak_farnostrakvice_cz \
-            -v "$PWD:/workspace" \
-            -w /workspace \
             "$TERRAFORM_IMAGE" \
-            sh -lc 'terraform init -input=false && terraform plan -input=false -out=tfplan'
+            sh -lc 'cd /workspace && terraform init -input=false && terraform plan -input=false -out=tfplan')
+          trap 'docker rm -f "$cid" >/dev/null 2>&1 || true' EXIT
+          docker cp "$GITHUB_WORKSPACE/." "$cid:/workspace"
+          docker start -a "$cid"
+          docker cp "$cid:/workspace/tfplan" "$GITHUB_WORKSPACE/tfplan"
+          docker rm -f "$cid" >/dev/null 2>&1 || true
+          trap - EXIT
 
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v4
@@ -58,7 +60,7 @@ jobs:
       TF_TOKEN_terrakube_api_rak_farnostrakvice_cz: ${{ secrets.TERRAKUBE_TOKEN }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download Plan Artifact
         uses: actions/download-artifact@v4
@@ -69,11 +71,12 @@ jobs:
       - name: Terraform Apply
         run: |
           set -euo pipefail
-          cd "${GITHUB_WORKSPACE}"
-          ls -la
-          docker run --rm \
+          cid=$(docker create \
             -e TF_TOKEN_terrakube_api_rak_farnostrakvice_cz \
-            -v "$PWD:/workspace" \
-            -w /workspace \
             "$TERRAFORM_IMAGE" \
-            sh -lc 'terraform init -input=false && terraform apply -input=false -auto-approve tfplan'
+            sh -lc 'cd /workspace && terraform init -input=false && terraform apply -input=false -auto-approve tfplan')
+          trap 'docker rm -f "$cid" >/dev/null 2>&1 || true' EXIT
+          docker cp "$GITHUB_WORKSPACE/." "$cid:/workspace"
+          docker start -a "$cid"
+          docker rm -f "$cid" >/dev/null 2>&1 || true
+          trap - EXIT
