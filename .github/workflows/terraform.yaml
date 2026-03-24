@@ -28,13 +28,16 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Terraform Plan
-        run: >-
-          docker run --rm
-          -e TF_TOKEN_terrakube_api_rak_farnostrakvice_cz
-          -v "$GITHUB_WORKSPACE:/workspace"
-          -w /workspace
-          "$TERRAFORM_IMAGE"
-          sh -lc 'terraform init -input=false && terraform plan -input=false -out=tfplan'
+        run: |
+          set -euo pipefail
+          cd "${GITHUB_WORKSPACE}"
+          ls -la
+          docker run --rm \
+            -e TF_TOKEN_terrakube_api_rak_farnostrakvice_cz \
+            -v "$PWD:/workspace" \
+            -w /workspace \
+            "$TERRAFORM_IMAGE" \
+            sh -lc 'terraform init -input=false && terraform plan -input=false -out=tfplan'
 
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v4
@@ -64,10 +67,13 @@ jobs:
           path: .
 
       - name: Terraform Apply
-        run: >-
-          docker run --rm
-          -e TF_TOKEN_terrakube_api_rak_farnostrakvice_cz
-          -v "$GITHUB_WORKSPACE:/workspace"
-          -w /workspace
-          "$TERRAFORM_IMAGE"
-          sh -lc 'terraform init -input=false && terraform apply -input=false -auto-approve tfplan'
+        run: |
+          set -euo pipefail
+          cd "${GITHUB_WORKSPACE}"
+          ls -la
+          docker run --rm \
+            -e TF_TOKEN_terrakube_api_rak_farnostrakvice_cz \
+            -v "$PWD:/workspace" \
+            -w /workspace \
+            "$TERRAFORM_IMAGE" \
+            sh -lc 'terraform init -input=false && terraform apply -input=false -auto-approve tfplan'
