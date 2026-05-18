@@ -47,7 +47,8 @@ jobs:
         run: terraform init
 
       - name: Terraform Plan
-        run: terraform plan -no-color -input=false
+        # run: terraform plan -no-color -input=false
+        run: terraform plan -no-color
 
   # --- JOB 2: APPLY ---
   terraform-apply:
@@ -83,4 +84,5 @@ jobs:
 
       - name: Terraform Apply
         # -auto-approve is required because the "human" step happened at the GH UI level
-        run: terraform apply -no-color -input=false
+        # run: terraform apply -no-color -input=false
+        run: terraform apply -no-color
