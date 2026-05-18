@@ -42,4 +42,4 @@ jobs:
 
       - name: Terraform Destroy
         # run: terraform destroy -no-color -input=false
-        run: terraform destroy -no-color
+        run: terraform destroy -no-color -auto-approve
