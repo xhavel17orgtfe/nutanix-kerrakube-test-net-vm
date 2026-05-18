@@ -85,4 +85,4 @@ jobs:
       - name: Terraform Apply
         # -auto-approve is required because the "human" step happened at the GH UI level
         # run: terraform apply -no-color -input=false
-        run: terraform apply -no-color
+        run: terraform apply -no-color -auto-approve
