@@ -1,12 +1,6 @@
 name: "Terrakube Remote Run Destroy"
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
   workflow_dispatch: 
 
 
