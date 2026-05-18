@@ -1,0 +1,51 @@
+name: "Terrakube Remote Run"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch: 
+
+
+concurrency:
+  group: "terraform-remote-run"
+  cancel-in-progress: false
+
+env:
+  TF_IN_AUTOMATION: "true"
+  environment: "prd"
+
+jobs:
+  # --- JOB 1: Destroy---
+  terraform-destroy:
+    name: "Terraform Destroy"
+    runs-on: 
+      group: default
+    
+    steps:
+      - name: Prepare Node.js Environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl
+          curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+          sudo apt-get install -y nodejs
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          cli_config_credentials_hostname: 'terrakube-api.rak.farnostrakvice.cz'
+          cli_config_credentials_token: ${{ secrets.TERRAKUBE_TOKEN }}
+          terraform_wrapper: false 
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Destroy
+        # run: terraform destroy -no-color -input=false
+        run: terraform destroy -no-color
