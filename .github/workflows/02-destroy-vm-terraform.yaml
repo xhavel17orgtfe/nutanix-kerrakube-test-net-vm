@@ -1,4 +1,4 @@
-name: "Terrakube Remote Run"
+name: "Terrakube Remote Run Destroy"
 
 on:
   push:
